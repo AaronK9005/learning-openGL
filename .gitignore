@@ -1,0 +1,2 @@
+build/*
+!build/learning_opengl.exe
