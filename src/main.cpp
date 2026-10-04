@@ -3,42 +3,55 @@
 #include <glad/gl.h>
 #include <glfw/glfw3.h>
 
-#pragma region window data and callbacks
-constexpr int startWidth = 800;
-constexpr int startHeight = 600;
-constexpr const char* windowName = "learning OpenGL";
+/**
+ * @brief VBO == Vertex Buffer Object
+ * It stores raw data (like vertex position)
+ */
 
-void framebufferSizeCallback(GLFWwindow* window, int width, int height)
-{
-    glViewport(0, 0, width, height);
-}
-#pragma endregion
+ /**
+  * @brief VAO == Vertex Array Object
+  * It stores how a VBO should be used (interpreted)
+  * 
+  */
 
-#pragma region input
-void processInput(GLFWwindow* window)
-{
-    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+    #pragma region |> window data and callbacks <|
+    constexpr int startWidth = 800;
+    constexpr int startHeight = 600;
+    constexpr const char* windowName = "learning OpenGL";
+
+    void framebufferSizeCallback(GLFWwindow* window, int width, int height)
     {
-        glfwSetWindowShouldClose(window, true);
+        glViewport(0, 0, width, height);
     }
-}
-#pragma endregion
+    #pragma endregion
 
-#pragma region shader src
-const char* vertShaderSource = "#version 330 core\n"
-    "layout (location = 0) in vec3 aPos;\n"
-    "void main()\n"
-    "{ gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0); }\0";
+    #pragma region |> input <|
+    void processInput(GLFWwindow* window)
+    {
+        if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+        {
+            glfwSetWindowShouldClose(window, true);
+        }
+    }
+    #pragma endregion
 
-const char* fragShaderSource = "#version 330 core\n"
-    "out vec4 FragColor;\n"
-    "void main()\n"
-    "{  FragColor = vec4(1.0f, 0.05f, 0.2f, 1.0f); }\0";
-#pragma endregion
+    #pragma region |> shader src <|
+    const char* vertShaderSource = "#version 330 core\n"
+        "layout (location = 0) in vec3 aPos;\n"
+        "void main()\n"
+        "{ gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0); }\0";
+
+    const char* fragShaderSource = "#version 330 core\n"
+        "out vec4 FragColor;\n"
+        "void main()\n"
+        "{  FragColor = vec4(1.0f, 0.05f, 0.2f, 1.0f); }\0";
+    #pragma endregion
 
 int main()
 {
-    #pragma region glfw init
+#pragma region |> basically boilerplate <|
+
+    #pragma region |> glfw init <|
     if (glfwInit() != GLFW_TRUE)
     {
         std::cerr << "glfwInit() failed" << std::endl;
@@ -47,7 +60,7 @@ int main()
     atexit(glfwTerminate);
     #pragma endregion
 
-    #pragma region window creation
+    #pragma region |> window creation <|
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
@@ -65,7 +78,7 @@ int main()
     glfwMakeContextCurrent(window);
     #pragma endregion
 
-    #pragma region glad loading
+    #pragma region |> glad loading <|
     if (!gladLoadGL((GLADloadfunc)glfwGetProcAddress))
     {
         std::cerr << "Failed to init GLAD" << std::endl;
@@ -73,16 +86,16 @@ int main()
     }
     #pragma endregion
 
-    #pragma region setting window callbacks
+    #pragma region |> setting window callbacks <|
     glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
 
     #pragma endregion
 
-    #pragma region setting gl stuff
+    #pragma region |> setting gl stuff <|
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     #pragma endregion
 
-    #pragma region vertices
+    #pragma region |> vertices <|
     float vertices[] = {
         -0.5f, -0.5f, 0.0f,
          0.5f, -0.5f, 0.0f,
@@ -90,15 +103,7 @@ int main()
     };
     #pragma endregion
 
-    #pragma region VBO = vertex buffer object
-    unsigned VBO; // vertex buffer object
-    glGenBuffers(1, &VBO);
-
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-    #pragma endregion
-
-    #pragma region shader compilation
+    #pragma region |> shader compilation <|
     unsigned vertexShader;
     vertexShader = glCreateShader(GL_VERTEX_SHADER);
     if (!vertexShader)
@@ -143,7 +148,7 @@ int main()
     }
     #pragma endregion
 
-    #pragma region shader program
+    #pragma region |> shader program <|
     unsigned shaderProgram;
     shaderProgram = glCreateProgram();
     if (!shaderProgram)
@@ -169,33 +174,41 @@ int main()
     glUseProgram(shaderProgram);
     #pragma endregion
 
-    #pragma region shader deletion
+    #pragma region |> shader deletion <|
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
     vertexShader = 0;
     fragmentShader = 0;
     #pragma endregion
 
-    #pragma region linking vertex attributes
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-    #pragma endregion
+#pragma endregion
 
-    #pragma region VAO = vertex array object
-    unsigned VAO;
+    // steps
+    // 1. bind Vertex Array Object
+    // 2. copy vertices array in a buffer for OpenGL to use
+    // 3. set vertex attribute pointers
+
+    // declare ids
+    unsigned VBO, VAO;
+
+    // generate on GPU
+    glGenBuffers(1, &VBO);
     glGenVertexArrays(1, &VAO);
 
-    // 1. bind Vertex Array Object
+    // bind and then copy data
     glBindVertexArray(VAO);
-    // 2. copy vertices array in a buffer for OpenGL to use
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-    // 3. set vertex attribute pointers
+
+    //* define how is should be used
+    // rn i only have vertex 3d pos in vertices (current VBO)
+    // if i had more, like lets say color, that would be at index 1
+    // and i would also need vertAttribPtr to say what is it
+    // and also enabelVertAttribArray for it to be used
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
-    #pragma endregion
 
-    #pragma region render loop
+    #pragma |> region render loop <|
     while(!glfwWindowShouldClose(window))
     {
         processInput(window);
