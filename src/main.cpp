@@ -53,7 +53,7 @@
     const char* vertShaderSource = "#version 330 core\n"
         "layout (location = 0) in vec3 aPos;\n"
         "void main()\n"
-        "{ gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0); }\0";
+        "{ gl_Position = vec4(aPos.xyz, 1.0); }\0";
 
     const char* fragShaderSource = "#version 330 core\n"
         "out vec4 FragColor;\n"
