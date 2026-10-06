@@ -17,6 +17,7 @@ target_include_directories(glad PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/g
 add_executable("${CMAKE_PROJECT_NAME}")
 
 target_compile_definitions("${CMAKE_PROJECT_NAME}" PUBLIC RESOURCES_PATH="${CMAKE_CURRENT_SOURCE_DIR}/resources/")
+target_compile_definitions("${CMAKE_PROJECT_NAME}" PUBLIC SHADERS_PATH="${CMAKE_CURRENT_SOURCE_DIR}/shaders/")
 
 target_sources("${CMAKE_PROJECT_NAME}" PRIVATE ${SRC_FILES})
 
