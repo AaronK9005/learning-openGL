@@ -1,6 +1,5 @@
 #pragma once
 
-
 class Shader
 {
     unsigned id = 0;
@@ -17,5 +16,5 @@ public:
     bool compile(const char* filename);
     void destroy();
 
-    unsigned get() { return id; }
+    unsigned get() const { return id; }
 };

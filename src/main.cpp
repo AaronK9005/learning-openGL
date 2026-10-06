@@ -4,7 +4,7 @@
 #include <glad/gl.h>
 #include <glfw/glfw3.h>
 
-#include "shader.hpp"
+#include "shader2.hpp"
 
 /**
  * @brief VBO = Vertex Buffer Object
@@ -120,13 +120,14 @@ int main()
     
     #pragma region |> vertices <|
     float vertices[] = {
-        -0.5f, -0.5f, 0.0f,
-         0.5f, -0.5f, 0.0f,
-         0.0f,  0.5f, 0.0f
+        // positions            // colors
+        -0.5f, -0.5f, 0.0f,     1.0f, 0.0f, 0.0f,
+         0.5f, -0.5f, 0.0f,     0.0f, 1.0f, 0.0f,
+         0.0f,  0.5f, 0.0f,     0.0f, 0.0f, 1.0f
     };
     #pragma endregion
 
-    #pragma region |> square vetices <|
+    #pragma region |> square vertices <|
     float sqVertices[] = {
          0.5f,  0.5f, 0.0f, // top right
         -0.5f,  0.5f, 0.0f, // top left
@@ -186,38 +187,8 @@ int main()
     // #pragma endregion
 
     #pragma region |> shader program <|
-    Shader vertexShader, fragmentShader;
-    if (
-        !vertexShader.compile(SHADERS_PATH "shader.vert") ||
-        !fragmentShader.compile(SHADERS_PATH "shader.frag")
-    )
-    {
-        return 1;
-    }
-
-    unsigned shaderProgram;
-    shaderProgram = glCreateProgram();
-    if (!shaderProgram)
-    {
-        std::cerr << "ERROR::SHADER::PROGRAM::CREATION" << std::endl;
-        return 1;
-    }
-    glAttachShader(shaderProgram, vertexShader.get());
-    glAttachShader(shaderProgram, fragmentShader.get());
-    glLinkProgram(shaderProgram);
-    {
-        int success;
-        char infoLog[512];
-        glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
-        if (!success)
-        {
-            glGetProgramInfoLog(shaderProgram, sizeof(infoLog) / sizeof(infoLog[0]), nullptr, infoLog);
-            std::cerr << "ERROR::SHADER::PROGRAM::LINKING::FAILED\n" << infoLog << std::endl;
-            return 1;
-        }
-    }
-
-    glUseProgram(shaderProgram);
+    learning::Shader shader(SHADERS_PATH "shader.vert", SHADERS_PATH "shader.frag");
+    shader.use();
     #pragma endregion
 
     // #pragma region |> shader deletion <|
@@ -247,13 +218,13 @@ int main()
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-    //* define how is should be used
-    // rn i only have vertex 3d pos in vertices (current VBO)
-    // if i had more, like lets say color, that would be at index 1
-    // and i would also need vertAttribPtr to say what is it
-    // and also enabelVertAttribArray for it to be used
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    //* define how it should be used
+    // position
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
+    // colors
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
 #pragma endregion
 
 #pragma region |> square <|
@@ -281,17 +252,17 @@ int main()
 
         glClear(GL_COLOR_BUFFER_BIT);
 
-        #pragma region |> green value <|
-        float timeValue = glfwGetTime();
-        float greenValue = (std::sin(timeValue) / 2.0f) + 0.5;
-        int vertexColorLocation = glGetUniformLocation(shaderProgram, "ourColor");
-        if (vertexColorLocation == -1)
-        {
-            std::cerr << "could not find uniform 'ourColor' in shaderProgram" << std::endl;
-            return 1;
-        }
-        glUniform4f(vertexColorLocation, 0.0f, greenValue, 0.0f, 1.0f);
-        #pragma endregion
+        // #pragma region |> green value <|
+        // float timeValue = glfwGetTime();
+        // float greenValue = (std::sin(timeValue) / 2.0f) + 0.5;
+        // int vertexColorLocation = glGetUniformLocation(shaderProgram, "ourColor");
+        // if (vertexColorLocation == -1)
+        // {
+        //     std::cerr << "could not find uniform 'ourColor' in shaderProgram" << std::endl;
+        //     return 1;
+        // }
+        // glUniform4f(vertexColorLocation, 0.0f, greenValue, 0.0f, 1.0f);
+        // #pragma endregion
 
         // triangle
         glDrawArrays(GL_TRIANGLES, 0, 3);
