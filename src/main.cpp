@@ -5,6 +5,7 @@
 #include <glfw/glfw3.h>
 
 #include "shader2.hpp"
+#include "stb_image.h"
 
 /**
  * @brief VBO = Vertex Buffer Object
@@ -50,18 +51,6 @@
         }
 
     }
-    #pragma endregion
-
-    #pragma region |> shader src <|
-    const char* vertShaderSource = "#version 330 core\n"
-        "layout (location = 0) in vec3 aPos;\n"
-        "void main()\n"
-        "{ gl_Position = vec4(aPos.xyz, 1.0); }\0";
-
-    const char* fragShaderSource = "#version 330 core\n"
-        "out vec4 FragColor;\n"
-        "void main()\n"
-        "{  FragColor = vec4(1.0f, 0.05f, 0.2f, 1.0f); }\0";
     #pragma endregion
 
 int main()
@@ -118,89 +107,55 @@ int main()
     std::cout << "Maximum number of vertex attributes supported: " << nrAttributes << std::endl;
     #pragma endregion
     
-    #pragma region |> vertices <|
-    float vertices[] = {
-        // positions            // colors
-        -0.5f, -0.5f, 0.0f,     1.0f, 0.0f, 0.0f,
-         0.5f, -0.5f, 0.0f,     0.0f, 1.0f, 0.0f,
-         0.0f,  0.5f, 0.0f,     0.0f, 0.0f, 1.0f
-    };
-    #pragma endregion
-
-    #pragma region |> square vertices <|
-    float sqVertices[] = {
-         0.5f,  0.5f, 0.0f, // top right
-        -0.5f,  0.5f, 0.0f, // top left
-        -0.5f, -0.5f, 0.0f, // bottom left
-         0.5f, -0.5f, 0.0f  // bottom right
-    };
-    
-    unsigned sqIndices[] = {
-        0, 1, 3,
-        1, 2, 3
-    };
-    #pragma endregion
-
-    // #pragma region |> shader compilation <|
-    // unsigned vertexShader;
-    // vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    // if (!vertexShader)
-    // {
-    //     std::cerr << "ERROR::SHADER::VERTEX::CREATION" << std::endl;
-    //     return 1;
-    // }
-    // glShaderSource(vertexShader, 1, &vertShaderSource, nullptr);
-    // glCompileShader(vertexShader);
-    // {
-    //     int success;
-    //     char infoLog[512];
-    //     glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
-    // 
-    //     if (!success)
-    //     {
-    //         glGetShaderInfoLog(vertexShader, sizeof(infoLog) / sizeof(infoLog[0]), nullptr, infoLog);
-    //         std::cerr << "ERROR::SHADER::VERTEX::COMPILATION::FAILED\n" << infoLog << std::endl;
-    //         return 1;
-    //     }
-    // }
-    // 
-    // unsigned fragmentShader;
-    // fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    // if (!fragmentShader)
-    // {
-    //     std::cerr << "ERROR::SHADER::VERTEX::CREATION" << std::endl;
-    //     return 1;
-    // }
-    // glShaderSource(fragmentShader, 1, &fragShaderSource, nullptr);
-    // glCompileShader(fragmentShader);
-    // {
-    //     int success;
-    //     char infoLog[512];
-    //     glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
-    // 
-    //     if (!success)
-    //     {
-    //         glGetShaderInfoLog(fragmentShader, sizeof(infoLog) /  sizeof(infoLog[0]), nullptr, infoLog);
-    //         std::cerr << "ERROR::SHADER::FRAGMENT::COMPILATION::FAILED\n" << infoLog << std::endl;
-    //     }
-    // }
-    // #pragma endregion
-
     #pragma region |> shader program <|
     learning::Shader shader(SHADERS_PATH "shader.vert", SHADERS_PATH "shader.frag");
     shader.use();
     #pragma endregion
 
-    // #pragma region |> shader deletion <|
-    // glDeleteShader(vertexShader);
-    // glDeleteShader(fragmentShader);
-    // vertexShader = 0;
-    // fragmentShader = 0;
-    // #pragma endregion
-
 #pragma endregion
 
-#pragma region |> triangle <|
+#pragma region |> vertices <|
+    float vertices[] = {
+        // positions            // colors            // texture coords
+         0.5f,  0.5f, 0.0f,     1.0f, 0.0f, 0.0f,    1.0f, 1.0f,    // top right
+         0.5f, -0.5f, 0.0f,     0.0f, 1.0f, 0.0f,    1.0f, 0.0f,    // bottom right
+        -0.5f, -0.5f, 0.0f,     0.0f, 0.0f, 1.0f,    0.0f, 0.0f,    // bottom left
+        -0.5f,  0.5f, 0.0f,     1.0f, 1.0f, 0.0f,    0.0f, 1.0f     // top left
+    };
+
+    unsigned indices[] = {
+        0, 1, 3,
+        1, 2, 3
+    };
+#pragma endregion
+
+#pragma region |> quad <|
+    unsigned VBO, VAO;
+    unsigned EBO;
+
+    glGenBuffers(1, &VBO);
+    glGenBuffers(1, &EBO);
+    glGenVertexArrays(1, &VAO);
+
+    glBindVertexArray(VAO);
+
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+    // positions
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+    // colors
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+    // texture coords
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+    glEnableVertexAttribArray(2);
+
+/* #pragma region |> triangle <|
     // steps
     // 1. bind Vertex Array Object
     // 2. copy vertices array in a buffer for OpenGL to use
@@ -226,23 +181,56 @@ int main()
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
 #pragma endregion
+*/
+#pragma endregion
 
-#pragma region |> square <|
-    // unsigned VAO, VBO;
-    // unsigned EBO; // Element Buffer Object
+#pragma region |-> textures <-|
 
-    // glGenBuffers(1, &VBO);
-    // glGenBuffers(1, &EBO);
-    // glGenVertexArrays(1, &VAO);
-    
-    // glBindVertexArray(VAO);
-    // glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    // glBufferData(GL_ARRAY_BUFFER, sizeof(sqVertices), sqVertices, GL_STATIC_DRAW);
-    // glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    // glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(sqIndices), sqIndices, GL_STATIC_DRAW);
+    unsigned texture;
 
-    // glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-    // glEnableVertexAttribArray(0);
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture);
+
+    #pragma region |> texture settings <|
+    // |> texture wrapping <| types:
+    // - GL_REPEAT
+    // - GL_MIRRORED_REPEAT
+    // - GL_CLAMP_TO_EDGE
+    // - GL_CLAMP_TO_BORDER -> needs borderColor
+    //      - float boarderColor[] = { 1.0f, 1.0f, 0.0f, 1.0f }
+    //      - glTextParametrfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor)
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+    // |> texture filtering <|
+    // - GL_NEAREST
+    // - GL_LINEAR
+    // - other
+    // |> also mipmaps <|
+    // GL_<LINEAR/NEAREST>_MIPMAP_<LINEAR/NEAREST>
+    // it is only used for GL_TEXTURE_MIN_FILTER
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    #pragma endregion
+
+    #pragma region |> image loading <|
+    int width, height, nrChannels;
+    unsigned char* data = stbi_load(RESOURCES_PATH "container.jpg", &width, &height, &nrChannels, 0);
+
+    if (data)
+    {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+    }
+    else
+    {
+        std::cerr << "Failed to load texture image" << std::endl;
+        // return 1;
+    }
+    stbi_image_free(data);
+    #pragma endregion
+
 #pragma endregion
 
     #pragma |> region render loop <|
@@ -252,24 +240,12 @@ int main()
 
         glClear(GL_COLOR_BUFFER_BIT);
 
-        // #pragma region |> green value <|
-        // float timeValue = glfwGetTime();
-        // float greenValue = (std::sin(timeValue) / 2.0f) + 0.5;
-        // int vertexColorLocation = glGetUniformLocation(shaderProgram, "ourColor");
-        // if (vertexColorLocation == -1)
-        // {
-        //     std::cerr << "could not find uniform 'ourColor' in shaderProgram" << std::endl;
-        //     return 1;
-        // }
-        // glUniform4f(vertexColorLocation, 0.0f, greenValue, 0.0f, 1.0f);
-        // #pragma endregion
+        shader.use();
 
-        // triangle
-        glDrawArrays(GL_TRIANGLES, 0, 3);
+        /* triangle */ // glDrawArrays(GL_TRIANGLES, 0, 3);
 
-        // square
-        // glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
