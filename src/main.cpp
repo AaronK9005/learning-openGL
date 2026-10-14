@@ -12,15 +12,15 @@
  * It stores raw data (like vertex position)
  */
 
- /**
-  * @brief VAO = Vertex Array Object
-  * It stores how a VBO should be used (interpreted)
-  */
+/**
+ * @brief VAO = Vertex Array Object
+ * It stores how a VBO should be used (interpreted)
+ */
 
-  /**
-   * @brief EBO = Element Buffer Object
-   * Stores indexes to use for rendering
-   */
+/**
+ * @brief EBO = Element Buffer Object
+ * Stores indexes to use for rendering
+ */
 
     #pragma region |> window data and callbacks <|
     constexpr int startWidth = 800;
@@ -117,10 +117,10 @@ int main()
 #pragma region |> vertices <|
     float vertices[] = {
         // positions            // colors            // texture coords
-         0.5f,  0.5f, 0.0f,     1.0f, 0.0f, 0.0f,    1.0f, 1.0f,    // top right
-         0.5f, -0.5f, 0.0f,     0.0f, 1.0f, 0.0f,    1.0f, 0.0f,    // bottom right
-        -0.5f, -0.5f, 0.0f,     0.0f, 0.0f, 1.0f,    0.0f, 0.0f,    // bottom left
-        -0.5f,  0.5f, 0.0f,     1.0f, 1.0f, 0.0f,    0.0f, 1.0f     // top left
+         0.5f,  0.5f, 0.0f,     1.0f, 0.0f, 0.0f,    0.55, 0.55,    // top right
+         0.5f, -0.5f, 0.0f,     0.0f, 1.0f, 0.0f,    0.55, 0.45,    // bottom right
+        -0.5f, -0.5f, 0.0f,     0.0f, 0.0f, 1.0f,    0.45, 0.45,    // bottom left
+        -0.5f,  0.5f, 0.0f,     1.0f, 1.0f, 0.0f,    0.45, 0.55     // top lefts
     };
 
     unsigned indices[] = {
@@ -186,10 +186,13 @@ int main()
 
 #pragma region |-> textures <-|
 
-    unsigned texture;
+    unsigned texture1, texture2;
 
-    glGenTextures(1, &texture);
-    glBindTexture(GL_TEXTURE_2D, texture);
+    glGenTextures(1, &texture1);
+    glGenTextures(1, &texture2);
+    // not mandatory for texture 0: it is default
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, texture1);
 
     #pragma region |> texture settings <|
     // |> texture wrapping <| types:
@@ -199,9 +202,9 @@ int main()
     // - GL_CLAMP_TO_BORDER -> needs borderColor
     //      - float boarderColor[] = { 1.0f, 1.0f, 0.0f, 1.0f }
     //      - glTextParametrfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor)
-
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    // * only affects currently bound texture
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
     // |> texture filtering <|
     // - GL_NEAREST
@@ -210,11 +213,13 @@ int main()
     // |> also mipmaps <|
     // GL_<LINEAR/NEAREST>_MIPMAP_<LINEAR/NEAREST>
     // it is only used for GL_TEXTURE_MIN_FILTER
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     #pragma endregion
 
     #pragma region |> image loading <|
+    stbi_set_flip_vertically_on_load(true);
+
     int width, height, nrChannels;
     unsigned char* data = stbi_load(RESOURCES_PATH "container.jpg", &width, &height, &nrChannels, 0);
 
@@ -225,7 +230,28 @@ int main()
     }
     else
     {
-        std::cerr << "Failed to load texture image" << std::endl;
+        std::cerr << "Failed to load texture1" << std::endl;
+        // return 1;
+    }
+    stbi_image_free(data);
+
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, texture2);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+    data = stbi_load(RESOURCES_PATH "awesomeface.png", &width, &height, &nrChannels, 0);
+    if (data)
+    {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+    }
+    else
+    {
+        std::cerr << "Failed to load texture2" << std::endl;
         // return 1;
     }
     stbi_image_free(data);
@@ -233,14 +259,16 @@ int main()
 
 #pragma endregion
 
+    shader.use(); // don't forget to activate the shader before setting uniforms!
+    glUniform1i(glGetUniformLocation(shader.id, "texture1"), 0); // manually
+    shader.setInt("texture2", 1); // or with shader class
+
     #pragma |> region render loop <|
     while(!glfwWindowShouldClose(window))
     {
         processInput(window);
 
         glClear(GL_COLOR_BUFFER_BIT);
-
-        shader.use();
 
         /* triangle */ // glDrawArrays(GL_TRIANGLES, 0, 3);
 
