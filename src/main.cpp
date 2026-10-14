@@ -25,6 +25,14 @@
  * Stores indexes to use for rendering
  */
 
+/**
+ * @brief matrix multiplications:
+ * 1) scaling
+ * 2) rotations
+ * 3) translations
+ * 
+ */
+
     #pragma region |> window data and callbacks <|
     constexpr int startWidth = 800;
     constexpr int startHeight = 600;
@@ -294,14 +302,20 @@ int main()
 
         shader.setFloat("mixValue", mixValue);
 
-    #pragma region |> transformations <|
-        glm::mat4 trans = glm::mat4(1.0f);
-        trans = glm::translate(trans, glm::vec3(0.5f, 0.0f, 0.0f));
+        glm::mat4 baseMat = glm::mat4(1.0f);
+
+        glm::mat4 trans = glm::translate(baseMat, glm::vec3(0.5f, -0.5f, 0.0f));
         trans = glm::rotate(trans, (float)glfwGetTime() /*glm::radians(90.0f)*/, glm::vec3(0.0f, 0.0f, 1.0f));
         // trans = glm::scale(trans, glm::vec3(0.5, 0.5, 0.5));
 
         unsigned transformLoc = glGetUniformLocation(shader.id, "transform");
-    #pragma endregion
+        glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(trans));
+
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+        float scale = glm::sin((double)glfwGetTime());
+        trans = glm::translate(baseMat, glm::vec3(-0.5f, 0.5f, 0.0f));
+        trans = glm::scale(trans, glm::vec3(scale, scale, scale));
 
         glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(trans));
 
