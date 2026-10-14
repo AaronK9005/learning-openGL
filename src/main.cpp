@@ -33,6 +33,8 @@
     }
     #pragma endregion
 
+float mixValue = 0.2f;
+
     #pragma region |> input <|
     void processInput(GLFWwindow* window)
     {
@@ -49,7 +51,18 @@
         {
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         }
-
+        else if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
+        {
+            mixValue += 0.001f;
+            if (mixValue > 1.0f)
+                mixValue = 1.0f;
+        }
+        else if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
+        {
+            mixValue -= 0.001f;
+            if (mixValue < 0.0f)
+                mixValue = 0.0f;
+        }
     }
     #pragma endregion
 
@@ -117,10 +130,10 @@ int main()
 #pragma region |> vertices <|
     float vertices[] = {
         // positions            // colors            // texture coords
-         0.5f,  0.5f, 0.0f,     1.0f, 0.0f, 0.0f,    0.55, 0.55,    // top right
-         0.5f, -0.5f, 0.0f,     0.0f, 1.0f, 0.0f,    0.55, 0.45,    // bottom right
-        -0.5f, -0.5f, 0.0f,     0.0f, 0.0f, 1.0f,    0.45, 0.45,    // bottom left
-        -0.5f,  0.5f, 0.0f,     1.0f, 1.0f, 0.0f,    0.45, 0.55     // top lefts
+         0.5f,  0.5f, 0.0f,     1.0f, 0.0f, 0.0f,    1.0f, 1.0f,    // top right
+         0.5f, -0.5f, 0.0f,     0.0f, 1.0f, 0.0f,    1.0f, 0.0f,    // bottom right
+        -0.5f, -0.5f, 0.0f,     0.0f, 0.0f, 1.0f,    0.0f, 0.0f,    // bottom left
+        -0.5f,  0.5f, 0.0f,     1.0f, 1.0f, 0.0f,    0.0f, 1.0f     // top lefts
     };
 
     unsigned indices[] = {
@@ -203,8 +216,8 @@ int main()
     //      - float boarderColor[] = { 1.0f, 1.0f, 0.0f, 1.0f }
     //      - glTextParametrfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor)
     // * only affects currently bound texture
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
     // |> texture filtering <|
     // - GL_NEAREST
@@ -213,8 +226,8 @@ int main()
     // |> also mipmaps <|
     // GL_<LINEAR/NEAREST>_MIPMAP_<LINEAR/NEAREST>
     // it is only used for GL_TEXTURE_MIN_FILTER
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     #pragma endregion
 
     #pragma region |> image loading <|
@@ -240,8 +253,8 @@ int main()
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
     data = stbi_load(RESOURCES_PATH "awesomeface.png", &width, &height, &nrChannels, 0);
     if (data)
@@ -270,7 +283,7 @@ int main()
 
         glClear(GL_COLOR_BUFFER_BIT);
 
-        /* triangle */ // glDrawArrays(GL_TRIANGLES, 0, 3);
+        shader.setFloat("mixValue", mixValue);
 
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
         
