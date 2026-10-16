@@ -3,6 +3,7 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <glm/gtc/type_ptr.hpp>
 
 Shader::Shader(const char* vertPath, const char* fragPath)
 {
@@ -122,6 +123,6 @@ void Shader::setVec3(std::string_view name, const glm::vec3& vec) const
 
 void Shader::setMat4(std::string_view name, const glm::mat4& mat) const
 {
-
+    glUniformMatrix4fv(glGetUniformLocation(id, name.data()), 1, GL_FALSE, glm::value_ptr(mat));
 }
 
