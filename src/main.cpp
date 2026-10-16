@@ -55,6 +55,15 @@ float height = startHeight;
 const float minW = 0.0f, maxW = 2400.f;
 const float minH = 0.0f, maxH = 1800.f;
 
+glm::vec3 camera_pos = glm::vec3(0.0f, 0.0f, -3.0f);
+float move_speed = 0.0007f;
+
+glm::vec3 camera_target = glm::vec3(0.0f, 0.0f, 0.0f);
+glm::vec3 camera_direction = glm::normalize(camera_pos - camera_target);
+glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
+glm::vec3 camera_right = glm::normalize(glm::cross(up, camera_direction));
+glm::vec3 camera_up = glm::cross(camera_direction, camera_right);
+
 #pragma region |> input <|
 void processInput(GLFWwindow* window)
 {
@@ -64,6 +73,33 @@ void processInput(GLFWwindow* window)
     }
 
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+    {
+        camera_pos.y -= move_speed;
+    }
+    else if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+    {
+        camera_pos.y += move_speed;
+    }
+
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+    {
+        camera_pos.x += move_speed;
+    }
+    else if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+    {
+        camera_pos.x -= move_speed;
+    }
+
+    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
+    {
+        camera_pos.z -= 5 * move_speed;
+    }
+    else if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
+    {
+        camera_pos.z += 5 * move_speed;
+    }
+
+    if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
     {
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     }
@@ -414,7 +450,7 @@ int main()
         #pragma region |> matrix calculations <|
 
         glm::mat4 view = glm::mat4(1.0f);
-        view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
+        view = glm::translate(view, camera_pos);
 
         glm::mat4 projection;
         projection = glm::perspective(glm::radians(fov), width / height, 0.1f, 100.0f);
@@ -426,7 +462,13 @@ int main()
         {
             glm::mat4 model = glm::mat4(1.0f);
             model = glm::translate(model, cubePositions[i]);
+
             float angle = 20.0f * i;
+            if (i % 3 == 0)
+            {
+                angle = glfwGetTime() * 25.0f;
+            }
+
             model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
             shader.setMat4("model", model);
             glDrawArrays(GL_TRIANGLES, 0, 36);
