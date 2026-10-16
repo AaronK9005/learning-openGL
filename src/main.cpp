@@ -302,6 +302,7 @@ int main()
 
         shader.setFloat("mixValue", mixValue);
 
+        #pragma region |> matrix calculations <|
         glm::mat4 baseMat = glm::mat4(1.0f);
 
         glm::mat4 trans = glm::translate(baseMat, glm::vec3(0.5f, -0.5f, 0.0f));
@@ -318,6 +319,7 @@ int main()
         trans = glm::scale(trans, glm::vec3(scale, scale, scale));
 
         glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(trans));
+        #pragma endregion
 
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
         

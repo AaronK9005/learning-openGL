@@ -85,42 +85,42 @@ void Shader::use()
     glUseProgram(id);
 }
 
-void Shader::setBool(const std::string& name, bool value) const
+void Shader::setBool(std::string_view name, bool value) const
 {
-    glUniform1i(glGetUniformLocation(id, name.c_str()), (int)value);
+    glUniform1i(glGetUniformLocation(id, name.data()), (int)value);
 }
 
-void Shader::setInt(const std::string& name, int value) const
+void Shader::setInt(std::string_view name, int value) const
 {
-    glUniform1i(glGetUniformLocation(id, name.c_str()), value);
+    glUniform1i(glGetUniformLocation(id, name.data()), value);
 }
 
-void Shader::setFloat(const std::string& name, float value) const
+void Shader::setFloat(std::string_view name, float value) const
 {
-    glUniform1f(glGetUniformLocation(id, name.c_str()), value);
+    glUniform1f(glGetUniformLocation(id, name.data()), value);
 }
 
-void Shader::setVec2(const std::string& name, float x, float y) const
+void Shader::setVec2(std::string_view name, float x, float y) const
 {
-    glUniform2f(glGetUniformLocation(id, name.c_str()), x, y);
+    glUniform2f(glGetUniformLocation(id, name.data()), x, y);
 }
 
-void Shader::setVec2(const std::string& name, const glm::vec2& vec) const
+void Shader::setVec2(std::string_view name, const glm::vec2& vec) const
 {
-    glUniform2f(glGetUniformLocation(id, name.c_str()), vec.x, vec.y);
+    glUniform2f(glGetUniformLocation(id, name.data()), vec.x, vec.y);
 }
 
-void Shader::setVec3(const std::string& name, float x, float y, float z) const
+void Shader::setVec3(std::string_view name, float x, float y, float z) const
 {
-    glUniform3f(glGetUniformLocation(id, name.c_str()), x, y, z);
+    glUniform3f(glGetUniformLocation(id, name.data()), x, y, z);
 }
 
-void Shader::setVec3(const std::string& name, const glm::vec3& vec) const
+void Shader::setVec3(std::string_view name, const glm::vec3& vec) const
 {
-    glUniform3f(glGetUniformLocation(id, name.c_str()), vec.x, vec.y, vec.z);
+    glUniform3f(glGetUniformLocation(id, name.data()), vec.x, vec.y, vec.z);
 }
 
-void Shader::setMat4(const std::string& name, const glm::mat4& mat) const
+void Shader::setMat4(std::string_view name, const glm::mat4& mat) const
 {
 
 }
