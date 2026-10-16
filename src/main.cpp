@@ -46,6 +46,15 @@ void framebufferSizeCallback(GLFWwindow* window, int width, int height)
 
 float mixValue = 0.2f;
 
+float fov = 45.0f;
+const float minfov = 0.0f, maxfov = 180.0f;
+
+float width = startWidth;
+float height = startHeight;
+
+const float minW = 0.0f, maxW = 2400.f;
+const float minH = 0.0f, maxH = 1800.f;
+
 #pragma region |> input <|
 void processInput(GLFWwindow* window)
 {
@@ -62,9 +71,10 @@ void processInput(GLFWwindow* window)
     {
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     }
-    else if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
+    
+    if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
     {
-        mixValue += 0.0001;
+        mixValue += 0.001;
         if (mixValue > 1.0f)
         {
             mixValue = 1.0f;
@@ -72,10 +82,67 @@ void processInput(GLFWwindow* window)
     }
     else if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
     {
-        mixValue -= 0.0001;
+        mixValue -= 0.001;
         if (mixValue < 0.0f)
         {
             mixValue = 0.0f;
+        }
+    }
+    
+    if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
+    {
+        fov -= 0.1;
+        if (fov < minfov)
+        {
+            fov = minfov;
+        }
+    }
+    else if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
+    {
+        fov += 0.1;
+        if (fov > maxfov)
+        {
+            fov = maxfov;
+        }
+    }
+    
+    if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS)
+    {
+        width = startWidth;
+        height = startHeight;
+    }
+
+    if (glfwGetKey(window, GLFW_KEY_J) == GLFW_PRESS)
+    {
+        width -= 0.1;
+        if (width < minW)
+        {
+            width = minW;
+        }
+    }
+    else if (glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS)
+    {
+        width += 0.1;
+        if (width > maxW)
+        {
+            width = maxW;
+        }
+    }
+
+    if (glfwGetKey(window, GLFW_KEY_I) == GLFW_PRESS)
+    {
+        height -= 0.1;
+        if (height < minH)
+        {
+            height = minH;
+        }
+    }
+    else if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS)
+    {
+        height += 0.1;
+        if (height > maxH)
+        {
+            height = maxH;
         }
     }
 }
@@ -288,6 +355,7 @@ int main()
     #pragma region |> image loading <|
     stbi_set_flip_vertically_on_load(true);
 
+{
     int width, height, nrChannels;
     unsigned char* data = stbi_load(RESOURCES_PATH "container.jpg", &width, &height, &nrChannels, 0);
 
@@ -323,6 +391,7 @@ int main()
         // return 1;
     }
     stbi_image_free(data);
+}
     #pragma endregion
 
     #pragma region |> texture uniform setting <|
@@ -348,7 +417,7 @@ int main()
         view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
 
         glm::mat4 projection;
-        projection = glm::perspective(glm::radians(45.0f), (float)startWidth / (float)startHeight, 0.1f, 100.0f);
+        projection = glm::perspective(glm::radians(fov), width / height, 0.1f, 100.0f);
 
         shader.setMat4("view", view);
         shader.setMat4("projection", projection);
