@@ -7,6 +7,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#include "camera.hpp"
 #include "shader.hpp"
 #include "stb_image.h"
 
@@ -38,27 +39,17 @@ constexpr int startWidth = 800;
 constexpr int startHeight = 600;
 constexpr const char* windowName = "learning OpenGL";
 
-void framebufferSizeCallback(GLFWwindow* window, int width, int height)
-{
-    glViewport(0, 0, width, height);
-}
+void framebufferSizeCallback(GLFWwindow* window, int width, int height);
+void mouseCallback(GLFWwindow* window, double xposIn, double yposIn);
+void scrollCallback(GLFWwindow* window, double xoffset, double yoffset);
 #pragma endregion
 
 float mixValue = 0.2f;
 
-float fov = 45.0f;
-const float minfov = 0.0f, maxfov = 180.0f;
-
-float width = startWidth;
-float height = startHeight;
-
-const float minW = 0.0f, maxW = 2400.f;
-const float minH = 0.0f, maxH = 1800.f;
-
-float movement_speed = 3.0f;
-glm::vec3 camera_pos = glm::vec3(0.0f, 0.0f, -3.0f);
-glm::vec3 camera_front = glm::vec3(0.0f, 0.0f, -1.0f);
-glm::vec3 camera_up = glm::vec3(0.0f, 1.0f, 0.0f);
+Camera camera(glm::vec3(0.0f, 0.0f, -3.0f));
+float lastX = startWidth / 2.0f;
+float lastY = startHeight / 2.0f;
+bool first_mouse = true;
 
 float delta_time = 0.0f;
 float last_frame = 0.0f;
@@ -75,15 +66,14 @@ void processInput(GLFWwindow* window)
         glfwSetWindowShouldClose(window, true);
     }
 
-    float camera_speed = movement_speed * delta_time;
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-        camera_pos += camera_speed * camera_front;
+        camera.processKeyboard(Dir::forward, delta_time);
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-        camera_pos -= camera_speed * camera_front;
+        camera.processKeyboard(Dir::backward, delta_time);
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-        camera_pos -= glm::normalize(glm::cross(camera_front, camera_up)) * camera_speed;
+        camera.processKeyboard(Dir::left, delta_time);
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-        camera_pos += glm::normalize(glm::cross(camera_front, camera_up)) * camera_speed;
+        camera.processKeyboard(Dir::right, delta_time);
 
     if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
     {
@@ -110,63 +100,6 @@ void processInput(GLFWwindow* window)
             mixValue = 0.0f;
         }
     }
-    
-    if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
-    {
-        fov -= 0.1;
-        if (fov < minfov)
-        {
-            fov = minfov;
-        }
-    }
-    else if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
-    {
-        fov += 0.1;
-        if (fov > maxfov)
-        {
-            fov = maxfov;
-        }
-    }
-    
-    if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS)
-    {
-        width = startWidth;
-        height = startHeight;
-    }
-
-    if (glfwGetKey(window, GLFW_KEY_J) == GLFW_PRESS)
-    {
-        width -= 0.1;
-        if (width < minW)
-        {
-            width = minW;
-        }
-    }
-    else if (glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS)
-    {
-        width += 0.1;
-        if (width > maxW)
-        {
-            width = maxW;
-        }
-    }
-
-    if (glfwGetKey(window, GLFW_KEY_I) == GLFW_PRESS)
-    {
-        height -= 0.1;
-        if (height < minH)
-        {
-            height = minH;
-        }
-    }
-    else if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS)
-    {
-        height += 0.1;
-        if (height > maxH)
-        {
-            height = maxH;
-        }
-    }
 }
 #pragma endregion
 
@@ -187,6 +120,7 @@ int main()
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, true);
 
     #ifdef __APPLE__
         glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
@@ -199,6 +133,12 @@ int main()
         return 1;
     }
     glfwMakeContextCurrent(window);
+
+    glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
+    glfwSetCursorPosCallback(window, mouseCallback);
+    glfwSetScrollCallback(window, scrollCallback);
+
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     #pragma endregion
 
     #pragma region |> glad loading <|
@@ -207,11 +147,6 @@ int main()
         std::cerr << "Failed to init GLAD" << std::endl;
         return 1;
     }
-    #pragma endregion
-
-    #pragma region |> setting window callbacks <|
-    glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
-
     #pragma endregion
 
     #pragma region |> setting gl stuff <|
@@ -435,10 +370,10 @@ int main()
 
         #pragma region |> matrix calculations <|
         glm::mat4 view; // = glm::mat4(1.0f);
-        view = glm::lookAt(camera_pos, camera_pos + camera_front, camera_up);
+        view = camera.getViewMatrix();
 
         glm::mat4 projection;
-        projection = glm::perspective(glm::radians(fov), width / height, 0.1f, 100.0f);
+        projection = glm::perspective(glm::radians(45.0f), (float)startWidth / (float)startHeight, 0.1f, 100.0f);
 
         shader.setMat4("view", view);
         shader.setMat4("projection", projection);
@@ -467,4 +402,35 @@ int main()
     #pragma endregion
 
     return 0;
+}
+
+void framebufferSizeCallback(GLFWwindow* window, int width, int height)
+{
+    glViewport(0, 0, width, height);
+}
+
+void mouseCallback(GLFWwindow* window, double xposIn, double yposIn)
+{
+    float xpos = static_cast<float>(xposIn);
+    float ypos = static_cast<float>(yposIn);
+
+    if (first_mouse)
+    {
+        lastX = xpos;
+        lastY = ypos;
+        first_mouse = false;
+    }
+
+    float xoffset = xpos - lastX;
+    float yoffset = lastY - ypos;
+
+    lastX = xpos;
+    lastY = ypos;
+
+    camera.processMouseMovement(xoffset, yoffset);
+}
+
+void scrollCallback(GLFWwindow* window, double xoffset, double yoffset)
+{
+    camera.processMouseScroll(static_cast<float>(yoffset));
 }
